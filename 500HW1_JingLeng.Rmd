@@ -1,0 +1,62 @@
+---
+title: "Homework 1"
+author: "Jing Leng"
+date: "September 11, 2014"
+output: pdf_document
+---
+preprocessing: 
+```{r}
+read.csv("autodat.csv") -> autodat
+autodat$mpg[autodat$mpg == 99] <- NA
+autodat$horsepower[autodat$horsepower == 999] <- NA
+autodat$acceleration[autodat$acceleration == 99] <- NA
+autodat$origin <- factor(autodat$origin)
+levels(autodat$origin) <- c("American", "European", "Japanese")
+```
+a).
+#
+```{r }
+summary(autodat)
+```
+Summary of the data shows there are 5 values missing on __mpg__, 9 on __horsepower__, and 8 on __acceleration__. 
+
+b). 
+248 American, 70 European and 79 Japanese cars. 
+
+c). 
+```{r fig.height=3, fig.width = 4}
+hist(autodat$acceleration) 
+plot(density(autodat$acceleration, na.rm = T))
+```
+
+```{r}
+mean(autodat$acceleration, na.rm = T)
+sd(autodat$acceleration, na.rm = T)
+```
+mean: 15.55
+standard deviation: 2.74
+
+d). 
+```{r fig.width=4, fig.height=3}
+plot(density(autodat$horsepower, na.rm = T), main = "kernel density of horsepower")
+plot(density(log(autodat$horsepower), na.rm = T), main = "kernel density of log(hoursepower")
+```  
+  
+The density plot of horsepower is right-skewed. The density plot of log of horsepower is more symetric. Both of them have more than one peaks. 
+
+e).
+```{r fig.height = 3, fig.width = 4}
+boxplot(autodat$mpg ~ autodat$origin, main = "boxplot of mpg")
+```
+```{r}
+tapply(autodat$mpg, autodat$origin, function(x) mean(x, na.rm = T))
+```
+f). 
+```{r}
+pairs(autodat[, c("mpg", "displacement", "horsepower", "weight", "acceleration")])
+```
+g). 
+```{r}
+apply(autodat[autodat$origin == "American", c("mpg", "displacement", "horsepower", "weight", 
+                                              "acceleration")], 2, function(x) mean(x, na.rm = T))
+```
