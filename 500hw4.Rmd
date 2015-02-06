@@ -1,0 +1,114 @@
+---
+title: "Homework 4"
+author: "Jing Leng"
+date: "October 2, 2014"
+output: pdf_document
+---
+##1 
+```{r echo = F}
+library(faraway)
+```
+###a) 
+```{r}
+lm <- lm(lpsa~., prostate)
+summary(lm)$coefficient
+confint(lm)["age",]
+confint(lm, level = 0.9)["age",]
+```
+0 is in the 95% confidence interval of parameter for `age`, we fail to reject the null hypothesis. The p-value for variable `age` is 0.08229 > 0.05, therefore we fail to reject the null hypothesis.  
+0 is not in the 90% confidence interval of parameter for `age`, we reject the null hypothesis. The p-value 0.08229 < 0.1, we reject the null hypothesis. 
+
+###b) 
+```{r fig.width=5, fig.height=4}
+library(ellipse)
+plot(ellipse(lm, c("age", "lbph")),
+     type="l")
+points(lm$coef["age"],lm$coef["lbph"],pch=18)
+points(0,0)
+```
+  
+The null hypothesis is: 
+$$H_{0}:\beta_{age}=\beta_{lbph}=0$$
+Since the origin is within the ellipse, we fail to reject the null hypothesis. 
+
+###c) 
+```{r}
+newdata <- data.frame(lcavol = 1.44692, lweight = 3.62301, age = 65, lbph = 0.3001, 
+                      svi = 0, lcp = -0.79851, gleason = 7, pgg45 = 15)
+
+predict(lm, newdata, interval = "confidence")
+predict(lm, newdata, interval = "prediction")
+```
+The confidence interval for mean response is (2.17, 2.61), the prediction interval for new response is (0.96, 3.81). 
+
+##2 
+###a) 
+```{r fig.width=5, fig.height=4}
+lm2 <- lm(gamble ~ ., data = teengamb)
+st_res <- rstandard(lm2)
+plot(fitted.values(lm2),st_res,
+     xlab="Fitted values",
+     ylab="Standardized residuals")
+abline(h = 0)
+```
+The constant variance assumption does not hold. We transform the response variable into square root of `gamble`. 
+```{r fig.width=5, fig.height=4}
+newgamble <- sqrt(teengamb$gamble)
+teengamb$newgamble <- newgamble
+lm3 <- lm(newgamble ~ . - gamble, data = teengamb)
+
+st_res <- rstandard(lm3)
+plot(fitted.values(lm3),st_res,
+     xlab="Fitted values",
+     ylab="Standardized residuals")
+abline(h = 0)
+``` 
+The constant variance assumption holds. We will continue with the new model.  
+
+###b) 
+```{r fig.width=5, fig.height=4}
+qqnorm(lm3$residual, ylab="Residuals")
+qqline(lm3$residual)
+```
+Residuals can be seen as normaly distributed. 
+
+###c) 
+```{r fig.width=5, fig.height=4}
+halfnorm(influence(lm3)$hat, nlab = 2, ylab="Leverages")
+teengamb[c(42, 35), ]
+```
+Number 42 and number 35 has the largest leverages. 
+
+###d) 
+```{r}
+ti <- rstudent(lm3)
+max(abs(ti))
+which(abs(ti) == max(abs(ti)))
+p <- 2*(1-pt(max(abs(ti)), df=47-4-1))
+thres <- 0.05/47 
+```
+The p-value = `r p` > `r thres`, we fail to reject the null hypothsis. Therefore we cannot name a outlier from the data. 
+
+###e) 
+```{r fig.width=5, fig.height=4}
+cook <- cooks.distance(lm3)
+halfnorm(cook, nlab = 3, ylab="Cooks distance")
+```
+  
+number 5, 39 and 24 are suspected to be influential points. 
+```{r}
+lm4 <- lm(newgamble ~ . - gamble, data = teengamb[-24, ])
+predict(lm4, teengamb[24,], interval ="prediction")
+teengamb[24,]$newgamble
+
+lm5 <- lm(newgamble ~ . - gamble, data = teengamb[-39, ])
+predict(lm5, teengamb[39,], interval ="prediction")
+teengamb[39,]$newgamble
+
+
+lm6 <- lm(newgamble ~ . - gamble, data = teengamb[-5, ])
+predict(lm6, teengamb[5,], interval ="prediction")
+teengamb[5,]$newgamble
+```
+
+The real response for 24 and 39 are not in the respective prediction intervals in models excluding them. Therefore 24 and 39 are influential points. The real response for 5 is in the prediction interval, so it is not influential. 

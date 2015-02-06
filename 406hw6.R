@@ -1,0 +1,118 @@
+### 406 hw 6 ###
+## 1 
+densitybeta=function(x){
+  alpha=5;beta=2
+  dbeta(x,alpha,beta)
+}
+curve(densitybeta,from=0,to=1,n=200,col='blue')
+
+ARBeta1=function(n,alpha,beta){
+  Vy=numeric(n);Vcpt=integer(n);
+  
+  for (j in 1:n) {
+    cpt = 0
+    u = runif(1) 
+    y = runif(1) 
+    cpt = cpt + 1
+    while (u > y ^ (alpha - 1) * (1 - y) ^ (beta - 1)) {
+      u = runif(1)
+      y = runif(1)
+      cpt = cpt + 1
+    }
+    Vy[j] = y
+    Vcpt[j] = cpt 
+  }
+  return(list(Vy,Vcpt))
+}
+
+ARBeta2=function(n,alpha,beta){
+  a=min(alpha,beta)-1
+  Vy=numeric(n);Vcpt=integer(n);
+  
+  for (j in 1:n) {
+    u=runif(1); y=runif(1);cpt=1 
+    while (u > 4^a*y^(alpha-1)*(1-y)^(beta-1)) {
+      u = runif(1)
+      y = runif(1)
+      cpt = cpt + 1
+    }
+    Vy[j] = y
+    Vcpt[j] = cpt
+  }
+  
+  return(list(Vy,Vcpt))
+}
+
+ARBeta3=function(n,alpha,beta){
+  m=(alpha-1)/(alpha+beta-2)
+  Vy=numeric(n);Vcpt=integer(n);
+  
+  for (j in 1:n) {
+    u=runif(1); y=runif(1);cpt=1 
+    while (u > exp((alpha-1)*(log(y)-log(m)))) {
+      u = runif(1)
+      y = runif(1)
+      cpt = cpt + 1
+    }
+    Vy[j] = y
+    Vcpt[j] = cpt
+  }
+  return(list(Vy,Vcpt))
+}
+
+alpha=5;beta=2
+n=3000;
+system.time(Res1<-ARBeta1(n,alpha=5,beta=2));
+system.time(Res2<-ARBeta2(n,alpha=5,beta=2));
+system.time(Res3<-ARBeta3(n,alpha=5,beta=2));
+c(mean(Res1[[2]]),mean(Res2[[2]]),mean(Res3[[2]]))
+
+hist(Res1[[1]],prob=T,xlim=c(0,1),ylim=c(0,3),col='blue',nclass=200,main='Algo. I');
+par(new=T)
+curve(densitybeta,from=0,to=1,n=200,col='red', xlim=c(0,1),ylim=c(0,3)) 
+      
+curve(densitybeta,from=0,to=1,n=200,col='red',
+      xlim=c(0,1),ylim=c(0,32))
+M1=1/beta(alpha,beta)
+abline(h=M1,col='green')
+M2=(1/beta(alpha,beta))*((1/4)^(min(alpha-1,beta-1)))
+abline(h=M2,col='blue')
+m=(alpha-1)/(alpha+beta-2)
+M3=(1/beta(alpha,beta))*m^(alpha-1)*(1-m)^(beta-1)
+abline(h=M3,col='red')
+legend(x='left',legend=c('Algo. I','Algo.II','Algo. III'),
+       col=c('green','blue','red'),lty=c(1,1,1))
+
+## 2 
+library(gtools)
+mix = rdirichlet(1,c(1,1,1))
+M = list(3, 6, 9, 12)
+mu = lapply(M, function(m) matrix(runif(3, -m, m),ncol=3))
+A = replicate(3, matrix(runif(9, -1, 1),nrow=3), simplify = F)
+
+N = 300
+S = 6
+d = 3
+Z = sample(seq(3), size = N, replace = T, prob = mix)
+R = sapply(1:length(M), function(m) replicate(S, sapply(Z, function(i) c(mu[[m]][,i] + t(A[[i]])%*%rnorm(d, 0, 1), i), simplify = T), simplify = "array"), simplify = "array")
+R = lapply(1:length(M), function(m) replicate(S, sapply(Z, function(i) c(mu[[m]][,i] + t(A[[i]])%*%rnorm(d, 0, 1), i), simplify = T), simplify = "array"))
+
+
+class(R)
+class(R[[1]])
+sapply(R, dim)
+apply(R[[1]], 3, dim)
+R[[1]][,,1][3,] #this shows the third row of the first matrix in the first array entry of list R.
+
+for(m in 1:length(M)){
+#   pdf(paste("plot", m, ".pdf", sep = ""))
+  par(mfrow=c(3,2))
+  for(i in 1:S){
+    plot(R[[m]][,,i][1,(R[[m]][,,i][4,]==1)], R[[m]][,,i][2,(R[[m]][,,i][4,]==1)], xlim = c(-14, 14), ylim = c(-14, 14),
+        col=1, main=paste("Gaussian Mixture with M=", M[[m]]))
+    points(R[[m]][,,i][1,(R[[m]][,,i][4,]==2)], R[[m]][,,i][2,(R[[m]][,,i][4,]==2)], col=2)
+    points(R[[m]][,,i][1,(R[[m]][,,i][4,]==3)], R[[m]][,,i][2,(R[[m]][,,i][4,]==3)], col=3)
+  }
+}
+
+

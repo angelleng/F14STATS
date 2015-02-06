@@ -1,0 +1,44 @@
+---
+title: "Homework 7"
+author: "Jing Leng"
+date: "November 13, 2014"
+output: pdf_document
+---
+
+## 1 
+### a 
+```{r}
+ship <- read.csv('ships.csv')
+ship <- ship[ship$service != 0, ]
+ship$type <- as.factor(ship$type)
+ship$year <- as.factor(ship$year)
+ship$period <- as.factor(ship$period)
+logservice <- log(ship$service)
+m1 <- glm(accidents ~ type + year + period, offset=logservice, family=poisson, data = ship) 
+summary(m1)
+pchisq(38.695, 25, lower.tail=F)
+```
+0.040 < 0.05. Null hypothesis is rejected. 
+
+### b 
+```{r}
+ei <- residuals(m1,type="pearson") 
+sigma2 <- sum(ei^2)/14
+sigma2
+summary(m1,dispersion=sigma2)
+``` 
+$\hat{\sigma}^2=3.02$
+
+### c 
+```{r}
+predicted <- fitted.values(m1)/ship$service
+a <- sum(predicted[ship$period == 60])
+b <- sum(predicted[ship$period == 75])
+a/b
+
+c(0.3844 - 1.96 * sqrt(0.20552), 0.3844 + 1.96 * sqrt(0.20552))
+```
+
+
+
+

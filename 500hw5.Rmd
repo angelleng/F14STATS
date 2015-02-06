@@ -1,0 +1,111 @@
+---
+title: "Homework 5"
+author: "Jing Leng"
+date: "October 30, 2014"
+output: pdf_document
+---
+
+## 1 
+### a 
+```{r fig.height = 3, fig.width = 4}
+library(faraway)
+lm <- lm(Lab~Field, data = pipeline)
+lms <- summary(lm)
+lms
+lminf <- influence(lm)
+stud <- residuals(lm)/(lms$sig*sqrt(1-lminf$hat))
+plot(fitted(lm), stud)
+``` 
+  
+The constant variance assumption does not hold. 
+
+### b 
+```{r}
+i <- order(pipeline$Field)
+npipe <- pipeline[i,]
+ff <- gl(12,9)[-108]
+meanfield <- unlist(lapply(split(npipe$Field,ff),mean))
+varlab <- unlist(lapply(split(npipe$Lab,ff),var))
+x <- log(meanfield)
+lm2 <- lm(log(varlab) ~ x)
+summary(lm2)
+wt <- exp(predict(lm2, data.frame(x = log(pipeline$Field))))
+lm3 <- lm(Lab~Field, pipeline, weights = wt)
+summary(lm3)
+```
+
+  
+$\hat{a_{1}}=\beta_{1}=1.124$  
+$\hat{a_{0}}=e^{\frac{\beta_{0}}{a_{1}}}=0.73$ 
+```{r fig.height = 4.5, fig.width=6}
+plot(pipeline$Field, pipeline$Lab)
+abline(lm)
+abline(lm3, lty = 2)
+```
+
+### d 
+```{r}
+sum(lm3$residuals)
+sum(lm3$residuals*wt)
+```
+
+### e
+```{r}
+lm4 <- lm(Lab ~ 1, data = pipeline, weights = wt)
+anova(lm4, lm3)
+sst <- sum((lm4$residuals)^2*wt)
+sst
+sse <- 349156
+ssr <- sst - sse
+ssr
+```
+  
+F = 518.4
+p-value < 0.01
+We reject the null hypothesis. 
+sst = 2072914, ssr = 1723758, sse = 349156. 
+
+## 2 
+###a 
+```{r}
+setwd("~/Documents/GoBlue/F14/F14R")
+icu <- read.csv("icu.csv")
+icu$race <- factor(icu$race)
+glm <- glm(sta ~ ., family=binomial, data = icu)
+summary(glm)
+```
+  
+No, because of lack of distribution theory. 
+
+### b 
+```{r}
+glm2 <- glm(sta~age + can + race, family = binomial, data = icu)
+anova(glm2, glm)
+ 1-pchisq(12.84,2)
+library(aod)
+wald.test(b = coef(glm), Sigma = vcov(glm), Terms = c(4,5))
+```
+  
+  LRT: deviance = 12.84, p-value = 0.0016. 
+  WALD: X2 = 12.4, p-value = 0.0021.  
+  We reject the null hypothesis. 
+
+
+### c
+```{r}
+x <- model.matrix(glm)[,-1]
+newdat <- data.frame(sta=glm$y,x)
+glm3 <- glm(sta ~ age + can + cpr + inf + I(race2+race3), family = binomial, data = newdat)
+anova(glm3, glm)
+1-pchisq(0.962,1)
+lc <- cbind(0,0,0,0,0,1,-1)
+wald.test(b = coef(glm), Sigma = vcov(glm), L=lc)
+```
+  
+  We fail to reject the null hypothesis. 
+  
+### d 
+```{r}
+confint(glm3)
+```
+(-0.07, 1.49)

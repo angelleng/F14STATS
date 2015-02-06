@@ -1,0 +1,113 @@
+---
+title: "Homework 3"
+author: "Jing Leng"
+date: "September 25, 2014"
+output: pdf_document
+---
+##1 
+###a)
+```{r}
+library(MASS)
+mu <- c(3,4)
+sigma <- matrix(c(1.0,0.8,0.8,1.0),nrow=2)
+datam <- data.frame(mvrnorm(100,mu,sigma))
+colnames(datam) <- c("x","y")
+
+plot(y~x, datam, xlim=c(0,7),ylim=c(0,7))
+lm <- lm(y~x, datam)
+abline(lm)
+lm2 <- lm(x~y, datam)
+lines(lm2$fitted.values, datam$y)
+```
+
+###b) 
+```{r}
+
+summary(lm)
+summary(lm2)
+```
+
+
+The $R^{2}$, t-statistcs, F-statistcs and their respective p-values are the same.  
+
+###c)
+$$
+\begin{aligned}
+T_{y|x}&=\frac{\sqrt{S_{xx}}(\hat{\beta}-\beta)}{\hat{\sigma}}
+=\frac{\sqrt{S_{xx}}(\frac{S_{xy}}{S_{xx}}-\beta)}{\sqrt{S_{yy}-\frac{S_{xy}^{2}}{X_{xx}}}}
+=\frac{S_{xy}-S_{xx}\beta}{\sqrt{S_{yy}S_{xx}-S_{xy}^{2}}}
+=\frac{S_{xy}}{\sqrt{S_{yy}S_{xx}-S_{xy}^{2}}} 
+\end{aligned} 
+$$
+For $T_{y|x}$, x and y are interchangeable, thus $T_{x|y}=T_{y|x}$.  
+
+###d). 
+  
+  
+  
+  
+  
+  
+  
+  
+###e)
+```{r}
+left <- (lm$fitted.values - mean(datam$y))/(sd(datam$y))
+r = sqrt(1-(sum(lm$residuals^2))/(sum((datam$y - mean(datam$y))^2)))
+right <- r*(datam$x - mean(datam$x))/(sd(datam$x))
+sum(abs(left - right))
+```
+First 5 elements for left: `r left[1:5]`.  
+First 5 elements for right: `r right[1:5]`. 
+
+##2 
+###a)
+```{r}
+college <- read.csv('college.csv')
+head(college)
+pairs(college[c(1,2,4,5,6)])
+```
+
+###b) 
+```{r}
+lm2 <- lm(gradrat ~ . - lenroll - private - stufac - rmbrd, data = college) 
+anova(lm, lm2)
+``` 
+  
+F-statistics is 1.1251, p-value is 0.342. We fail to reject the null hypothesis. 
+###c)
+```{r}
+summary(lm)$coefficients
+coe <- summary(lm)$coefficients
+tstats <- (coe[2, 1] - 0.05)/coe[2,2]
+tstats
+pv <- 2*pt((coe[2, 1] - 0.05)/coe[2,2], 120 - 6)
+pv
+```
+  
+t-statistics is `r tstats`, p-value is `r pv`. We fail to reject the null hypothesis. 
+
+###d)
+```{r}
+lm3 <- lm(gradrat ~ . - lenroll - private - act, data = college)
+anova(lm, lm3)
+```
+The F-statistics is 45.289, p-value is close to 0. We reject the null hypothesis. 
+
+###e)
+```{r}
+lm4 <- lm(gradrat ~ I(rmbrd + act) + csat + private + stufac, college)
+anova(lm, lm4)
+```
+The F-statistics is 7.8216, p-value is 0.0061. We reject the null hypothesis. 
+
+##3
+```{r}
+x <- c(1, 0, -1)
+y <- c(1, 0, 2)
+lm <- lm(y ~ x + I(3*x^2 -2))
+lm2 <- lm(y ~ x)
+summary(lm)
+summary(lm2)
+```
+$\beta_{0}$ and $\beta_{1}$ remain unchanged no matter whether $\beta_{2}=0$. 
